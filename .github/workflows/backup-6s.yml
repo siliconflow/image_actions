@@ -61,7 +61,7 @@ jobs:
       # 1.2 Buid and push image to 6s
       - name: Pull and tag image
         run: |
-          docker pull "${{env.FROM}}"
+          docker pull --platform linux/arm64 "${{env.FROM}}"
           docker tag "${{env.FROM}}" ${{env.NEW_TAG}}
       - name: Push image to 6s
         run: |
