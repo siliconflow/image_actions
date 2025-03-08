@@ -1,0 +1,68 @@
+name: Backup to 6s
+
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: ""
+        default: "alpine/git"
+        required: false
+      new-tag:
+        description: ""
+        default: "alpine-git"
+        required: false
+      maximize-disk:
+        description: ""
+        default: "1"
+        required: false
+
+# Environment variables available to all jobs and steps in this workflow.
+env:
+  REGION_ID: cn-beijing
+  REGISTRY: registry.cn-beijing.aliyuncs.com
+  NAMESPACE: oneflow
+  TAG: ${{ github.sha }}
+  ENDPOINT_6S: hub.6scloud.com
+
+jobs:
+  back-up-to-6s:
+    name: "Backup image to 6s"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        pytorch-version: [1.9.0]
+    env:
+      FROM: ${{ github.event.inputs.from }}
+    steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        if: inputs.maximize-disk == '1'
+        with:
+          root-reserve-mb: 512
+          swap-size-mb: 1024
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+          remove-docker-images: "true"
+          overprovision-lvm: "true"
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set env
+        run: |
+          NEW_TAG="${{ env.ENDPOINT_6S }}/caishenghang/${{ github.event.inputs.new-tag }}"
+          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
+      - name: Login 6s
+        run: |
+          docker login -u ${{ secrets.HUB_6SCLOUD_USERNAME }} ${{ env.ENDPOINT_6S }} -p ${{ secrets.HUB_6SCLOUD_PASSWORD }}
+
+      # 1.2 Buid and push image to 6s
+      - name: Pull and tag image
+        run: |
+          docker pull "${{env.FROM}}"
+          docker tag "${{env.FROM}}" ${{env.NEW_TAG}}
+      - name: Push image to 6s
+        run: |
+          docker push ${{env.NEW_TAG}}
