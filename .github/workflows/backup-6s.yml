@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       max-parallel: 5
       matrix:
-        arch: [linux/arm64, linux/amd64]
+        arch: [arm64, amd64]
     env:
       FROM: ${{ github.event.inputs.from }}
     steps:
@@ -61,7 +61,7 @@ jobs:
       # 1.2 Buid and push image to 6s
       - name: Pull and tag image
         run: |
-          docker pull --platform ${{ matrix.arch }} "${{env.FROM}}"
+          docker pull --platform linux/${{ matrix.arch }} "${{env.FROM}}"
           docker tag "${{env.FROM}}" ${{env.NEW_TAG}}
       - name: Push image to 6s
         run: |
