@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       max-parallel: 5
       matrix:
-        pytorch-version: [1.9.0]
+        arch: [linux/arm64, linux/amd64]
     env:
       FROM: ${{ github.event.inputs.from }}
     steps:
@@ -52,7 +52,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Set env
         run: |
-          NEW_TAG="${{ env.ENDPOINT_6S }}/caishenghang/${{ github.event.inputs.new-tag }}"
+          NEW_TAG="${{ env.ENDPOINT_6S }}/caishenghang/${{ github.event.inputs.new-tag }}"--${{ matrix.arch }}
           echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
       - name: Login 6s
         run: |
@@ -61,7 +61,7 @@ jobs:
       # 1.2 Buid and push image to 6s
       - name: Pull and tag image
         run: |
-          docker pull --platform linux/arm64 "${{env.FROM}}"
+          docker pull --platform ${{ matrix.arch }} "${{env.FROM}}"
           docker tag "${{env.FROM}}" ${{env.NEW_TAG}}
       - name: Push image to 6s
         run: |
